@@ -1,0 +1,13 @@
+{
+  "name": "set01",
+  "description": "set01 - getting started with Node and Express",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "async": "^0.9.0",
+    "deasync": "0.0.7",
+    "ecstatic": "^0.5.5",
+    "express": "4.x",
+    "when": "^3.5.0"
+  }
+}
