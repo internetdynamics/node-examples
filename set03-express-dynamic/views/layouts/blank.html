@@ -1,0 +1,15 @@
+{{>main_head}}
+<body>
+{{{yield-header}}}
+    <!-- Page Content -->
+    <div id="main-container" class="container">
+{{{yield}}}
+        <hr>
+{{{yield-footer}}}
+{{>main_footer}}
+    </div>
+    <!-- /.container -->
+{{>main_footer_scripts}}
+{{{yield-footer_scripts}}}
+</body>
+</html>

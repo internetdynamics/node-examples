@@ -1,0 +1,22 @@
+{{#yield-header}}
+{{>home_carousel}}
+{{/yield-header}}
+<!-- ------------------------------------------------ -->
+
+{{>home_main}}
+{{>home_portfolio_section}}
+{{>home_features_section}}
+        <hr>
+{{>home_call_to_action}}
+
+<!-- ------------------------------------------------ -->
+{{#yield-footer_scripts}}
+<!-- Script to Activate the Carousel -->
+<script>
+$(function() {
+    $('.carousel').carousel({
+        interval: 5000 //changes the speed
+    });
+});
+</script>
+{{/yield-footer_scripts}}

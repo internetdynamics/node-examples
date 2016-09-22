@@ -1,0 +1,18 @@
+{{>main_head}}
+<body>
+<style type="text/css">
+div#main-container {
+    padding-top: 50px;
+}
+</style>
+{{>main_menu_header}}
+    <!-- Page Content -->
+    <div id="main-container" class="container">
+{{{yield}}}
+        <hr>
+{{>main_footer}}
+    </div>
+    <!-- /.container -->
+{{>main_footer_scripts}}
+</body>
+</html>

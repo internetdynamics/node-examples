@@ -1,0 +1,28 @@
+{{>main_head}}
+<body>
+{{>main_menu_header}}
+{{>home_carousel}}
+    <!-- Page Content -->
+    <div class="container">
+{{>home_main}}
+{{>home_portfolio_section}}
+{{>home_features_section}}
+        <hr>
+{{>home_call_to_action}}
+        <hr>
+{{>main_footer}}
+    </div>
+    <!-- /.container -->
+{{>main_footer_scripts}}
+
+<!-- Script to Activate the Carousel -->
+<script>
+$(function() {
+    $('.carousel').carousel({
+        interval: 5000 //changes the speed
+    });
+});
+</script>
+
+</body>
+</html>

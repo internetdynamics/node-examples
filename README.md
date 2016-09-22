@@ -1,7 +1,23 @@
 node-examples
 =============
 
-Examples for use in learning node and Express
+I have been developing software for Node.js for over two years.
+Yet I still think that I have missed the understanding of some parts.
+
+This project is my own personal workspace for learning (and documenting that I have learned)
+various steps of progressive complexity in Node software.
+I hope that it is also therefore useful to others.
+
+Main Websites
+
+ * [Node Website](http://www.nodejs.org) - the main website for Node.js
+   * [Node API Docs](https://nodejs.org/dist/latest-v4.x/docs/api/) - API docs for Node v4.x
+   * [Node Starter Guide](https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/) - entitled "Anatomy of an HTTP Transaction"
+ * [Express Website](https://expressjs.com/) - the website for the Express framework for Node.js
+   * [Express API Docs](https://expressjs.com/en/4x/api.html) - API docs for Express 4.x
+   * [Express Starter Guide](https://expressjs.com/en/starter/hello-world.html) - "Hello World" for Express
+   * [Common Express Middleware Modules](https://expressjs.com/en/resources/middleware.html) - common middleware modules
+   * [Common Express Utility Modules](https://expressjs.com/en/resources/utils.html) - common utility modules
 
 In general, we are going to follow the guides and documentation that are on the web.
 However, we will build, each example upon the last, to create a coherent, meaningful application.

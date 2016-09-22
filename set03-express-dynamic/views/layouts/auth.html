@@ -1,0 +1,17 @@
+{{>main_head}}
+<body>
+{{>main_menu_auth}}
+{{{yield-header}}}
+    <!-- Page Content -->
+    <div id="main-container" class="container">
+{{>main_title_simple}}
+{{{yield}}}
+        <hr>
+{{{yield-footer}}}
+{{>main_footer}}
+    </div>
+    <!-- /.container -->
+{{>main_footer_scripts}}
+{{{yield-footer_scripts}}}
+</body>
+</html>

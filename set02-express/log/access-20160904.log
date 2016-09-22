@@ -1,0 +1,5 @@
+50.192.12.217 - - [05/Sep/2016:01:50:53 +0000] "GET / HTTP/1.1" 500 21 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36"
+50.192.12.217 - - [05/Sep/2016:01:51:08 +0000] "GET /test1 HTTP/1.1" 301 45 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36"
+50.192.12.217 - - [05/Sep/2016:01:51:08 +0000] "GET /test1/ HTTP/1.1" 200 99 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36"
+50.192.12.217 - - [05/Sep/2016:01:51:12 +0000] "GET /test HTTP/1.1" 404 9 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36"
+50.192.12.217 - - [05/Sep/2016:01:51:20 +0000] "GET /test.hjs HTTP/1.1" 404 9 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36"

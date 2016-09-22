@@ -1,0 +1,7 @@
+#!/bin/bash
+
+perl -pi -e 's/\[\[\$([a-zA-Z0-9._-]+)\]\]/{{>$1}}/g' $(find . -name '*.html')
+perl -pi -e 's/\[\[\*([a-zA-Z0-9._-]+)\]\]/{{$1}}/g' $(find . -name '*.html')
+perl -pi -e 's/\[\[\+\+([a-zA-Z0-9._-]+)\]\]/{{$1}}/g' $(find . -name '*.html')
+perl -pi -e 's/{{(sitetitle)}}/{{title}}/g' $(find . -name '*.html')
+

@@ -1,0 +1,123 @@
+        <div class="row">
+            <div class="col-md-4 col-md-offset-2">
+                <div class="login-panel panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Update/Upload Your Photo</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form role="form" method="POST" action="/profile-photo">
+                            <fieldset>
+                                <div class="form-group">
+                                    <label>Profile Picture</label>
+                                    <input class="form-control" name="profile_picture" type="file">
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn btn-lg btn-success btn-block">Update/Upload Photo</button>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="login-panel panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Update Your Account Info</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form role="form" method="POST" action="/profile-info">
+                            <fieldset>
+                                <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input class="form-control" placeholder="Full Name (First Last)" name="full_name">
+                                </div>
+<!--
+                                <div class="form-group">
+                                    <label>Username</label>
+                                    <input class="form-control" placeholder="Username" name="username">
+                                </div>
+-->
+                                <div class="form-group">
+                                    <label>Mobile Phone</label>
+                                    <input class="form-control" placeholder="Mobile Phone (text-capable)" name="mobile_phone">
+                                </div>
+                                <div class="form-group">
+                                    <label>Mobile Carrier</label>
+                                    <input class="form-control" placeholder="Mobile Carrier" name="mobile_carrier">
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn btn-lg btn-primary btn-block">Update Account Info</button>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="login-panel panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Change Your Password</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form role="form" method="POST" action="/profile-password">
+                            <fieldset>
+                                <div class="form-group">
+                                    <label>Current Password</label>
+                                    <input class="form-control" placeholder="Current Password" name="password" type="password" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label>New Password</label>
+                                    <input class="form-control" placeholder="New Password" name="new_password" type="password" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label>New Password (repeat to confirm)</label>
+                                    <input class="form-control" placeholder="New Password (repeat to confirm)" name="new_password2" type="password" value="">
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn btn-lg btn-warning btn-block">Change Password</button>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="login-panel panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Add/Validate an Email Address</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form role="form" method="POST" action="/profile-new-email">
+                            <fieldset>
+                                <div class="form-group">
+                                    <label>E-mail</label>
+                                    <input class="form-control" placeholder="E-mail" name="email" type="email" autofocus>
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn btn-lg btn-success btn-block">Validate Email</button>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="login-panel panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Remove an Email Address</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form role="form" method="POST" action="/profile-remove-email">
+                            <fieldset>
+                                <div class="form-group">
+                                    <label>E-mail</label>
+                                    <input class="form-control" placeholder="E-mail to Remove" name="email" type="email" autofocus>
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn btn-lg btn-danger btn-block">Remove Email</button>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
