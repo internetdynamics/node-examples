@@ -124,14 +124,21 @@ var sessionUtils = {
         }
     },
     makeLocals: function(req, res) {
-        if (req.session) {
-            // retrieves AND clears req.session.flash ({ "error": ["errmsg1", "errmsg2"], "info": ["infomsg1"] })
-            var flash = req.flash();
-            // put into res.locals to be accessible by the templating system
-            res.locals.flash_info = flash.info;
-            res.locals.flash = flash.error;
-            if (req.user) {
-                res.locals.user = req.user;
+        // console.log("makeLocals() req.params", req.params);
+        if (res.locals) {
+            if (req.session) {
+                // retrieves AND clears req.session.flash ({ "error": ["errmsg1", "errmsg2"], "info": ["infomsg1"] })
+                var flash = req.flash();
+                // put into res.locals to be accessible by the templating system
+                res.locals.flash_info = flash.info;
+                res.locals.flash = flash.error;
+                if (req.user) {
+                    res.locals.user = req.user;
+                }
+            }
+            if (req.query) {
+                _.defaults(res.locals, req.query);
+                // console.log("makeLocals() res.locals", res.locals);
             }
         }
     }

@@ -1,9 +1,11 @@
 
 var debug = require('debug')('auth-utils');
+var config = require('../config');
 var _ = require("lodash");
-var mailUtils = require('./mail-utils');
 var bcrypt = require('bcrypt-nodejs');
 var crypto = require('crypto');
+var mailUtils = require('./mail-utils');
+var httpUtils = require('./http-utils');
 
 // Passport
 // node_modules/passport/lib/index.js
@@ -125,7 +127,6 @@ var authUtils = {
         // Save to Session: serializeUser() takes a full user record and boils it down to a single user-scalar
         //                  to save to the session that can be used later to recover the full user record.
         passport.serializeUser(function(user, done) {
-            // console.log("serializeUser(%j)", user);
             debug("passport.serializeUser(%j)", user);
             done(null, user.email);          // Often, this is the unique key into a database's user table to identify a user.
         });
@@ -138,24 +139,15 @@ var authUtils = {
         // It performs the req.logout() and then redirects to the /login page.
         app.get("/logout", function (req, res, next) {
             req.logout();
-            var redirect = req.param('redirect') || "/login";
+            var redirect = (req.query && req.query.redirect) ? req.query.redirect : "/login";
             res.redirect(redirect);
         });
 
-        // This is where the Sign Up form POSTs to
-        app.post("/signup", authUtils.signup);
-
-        // This is where the Validate form POSTs to
-        app.post("/validate", authUtils.validate);
-
-        // This is where the "Reset Password" form POSTs to
-        app.post("/reset",
-            passport.authenticate("local", {
-                successRedirect: "/",
-                failureRedirect: "/login",
-                failureFlash: true
-            })
-        );
+        app.post("/signup", authUtils.signup);                          // where the Sign Up form POSTs to
+        app.get("/validate", authUtils.validate);                       // where the Validate email links to (GET)
+        app.post("/validation-request", authUtils.validation_request);  // where the Validation Request form POSTs to
+        app.get("/reset", authUtils.reset);                             // where the "Reset Password" email links to (GET)
+        app.post("/reset-request", authUtils.reset_request);            // where the "Reset Password" form POSTs to
 
         // an Ajax API that can be used to log in from a single-page application (instead of a submitted form)
         app.post("/api/auth/login",
@@ -194,7 +186,7 @@ var authUtils = {
         // debug("authUtils.verifyUserCredentials() sessionID=%s", req.sessionID);
         // debug("authUtils.verifyUserCredentials() session=%j", req.session);
         User.findOne({ email: email }, function (err, user) {
-            console.log("verifyUserCredentials() User.findOne(%s) err, user", email, err, user);
+            // console.log("verifyUserCredentials() User.findOne(%s) err, user", email, err, user);
             var info;
             if (err) {
                 debug("authUtils.verifyUserCredentials() SYS-ERROR err", err);
@@ -205,8 +197,9 @@ var authUtils = {
                 debug("authUtils.verifyUserCredentials() AUTH-BADUSER info", info);
                 return done(null, false, info);
             }
+            var validation_request_url = "/validation-request?email="+encodeURIComponent(email);
             if (!user.verified) {
-                info = { message: 'Email Not Yet Validated<br>Before you may log in, you must click the link in the validation email you received.<br>If you need another validation email, go <a href="/validate">here</a>.', code: "AUTH-UNVERIFIED", redirect: "/validate" };
+                info = { message: 'Email Not Yet Validated<br>Before you may log in, you must click the link in the validation email you received.<br>If you need another validation email, go <a href="'+validation_request_url+'">here</a>.', code: "AUTH-UNVERIFIED", redirect: validation_request_url };
                 debug("authUtils.verifyUserCredentials() AUTH-UNVERIFIED info", info);
                 return done(null, false, info);
             }
@@ -216,36 +209,36 @@ var authUtils = {
                 return done(null, user);
             }
             else {
-                info = { message: 'Password incorrect.<br>Please try again or go <a href="/reset">here</a> to reset your password.', code: "AUTH-BADPASS" };
+                info = { message: 'Password incorrect.<br>Please try again or go <a href="/reset-request">here</a> to reset your password.', code: "AUTH-BADPASS" };
                 debug("authUtils.verifyUserCredentials() AUTH-BADPASS info", info);
                 return done(null, false, info);
             }
         });
     },
     signup: function (req, res, next) {
-        var fullname = req.body.fullname;
-        var email = req.body.email;
-        var password = req.body.password;
-        var password_confirm = req.body.password_confirm;
+        var fullname = req.body.fullname || "";
+        var email = req.body.email || "";
+        var password = req.body.password || "";
+        var password_confirm = req.body.password_confirm || "";
         if (!fullname || !email || !password || !password_confirm) {
-            req.flash("error", "All of the first four fields must be supplied.<br>Please try again.");
-            res.redirect("/signup");
-            return;
-        }
-        if (!authUtils.isPasswordStrongEnough(password)) {
-            req.flash("error", "Your password is not strong enough.<br>Please try again.");
-            res.redirect("/signup");
+            req.flash("error", "All of the required fields (with red stars) must be supplied.<br>Please try again.");
+            res.redirect("/signup?email="+encodeURIComponent(email)+"&fullname="+encodeURIComponent(fullname));
             return;
         }
         if (password !== password_confirm) {
             req.flash("error", "Your two passwords don't match.<br>Please try again.");
-            res.redirect("/signup");
+            res.redirect("/signup?email="+encodeURIComponent(email)+"&fullname="+encodeURIComponent(fullname));
             return;
         }
-        var auth_code = authUtils.generateAuthCode(email);
-        var passwordHash = authUtils.generateHash(password);
-        var provided_auth_code = req.param('auth_code');
-        var email_verified = authUtils.isValidAuthCode(email, provided_auth_code);
+        if (!authUtils.isPasswordStrongEnough(password)) {
+            req.flash("error", "Your password is not strong enough.<br>Strong passwords should be at least 8 characters long and be made up of letters, numbers, and symbols.<br>Please try again.");
+            res.redirect("/signup?email="+encodeURIComponent(email)+"&fullname="+encodeURIComponent(fullname));
+            return;
+        }
+        var auth_code = User.generateAuthCode(email);
+        var passwordHash = User.generateHash(password);
+        var provided_auth_code = req.body.auth_code;
+        var email_verified = User.isValidAuthCode(provided_auth_code, auth_code);
         var user = new User({
             email: email,
             fullname: fullname,
@@ -253,20 +246,20 @@ var authUtils = {
             auth_code: auth_code,
             verified: email_verified
         });
-        console.log("signup new user=%j", user);
-        console.log("signup req._passport", req._passport);
-        console.log("signup req.session", req.session);
+        // console.log("signup new user=%j", user);
+        // console.log("signup req._passport", req._passport);
+        // console.log("signup req.session", req.session);
         user.save(function (err) {
             if (err) {
-                console.log(err);
+                // console.log(err);
                 // if (err.code === 11000) { }
                 if (err.message.match(/duplicate key/)) {
-                    req.flash("error", "The user with that email ("+email+") is already signed up..<br>Please try again.");
-                    res.redirect("/signup");
+                    req.flash("error", 'The user with that email ('+email+') has already signed up.<br>Please <a href="/login?email='+encodeURIComponent(email)+'">login</a> or sign up with a different email.');
+                    res.redirect("/signup?email="+encodeURIComponent(email)+"&fullname="+encodeURIComponent(fullname));
                 }
                 else {
                     req.flash("error", "You were unsuccessful in signing up.<br>("+err.message+").<br>Please try again.");
-                    res.redirect("/signup");
+                    res.redirect("/signup?email="+encodeURIComponent(email)+"&fullname="+encodeURIComponent(fullname));
                 }
             }
             else {
@@ -277,132 +270,296 @@ var authUtils = {
                     });
                 }
                 else {
-                    var mail_text = "Hi "+fullname+",\n" +
-                                    "\n" +
-                                    "You have registered as a user\n" +
-                                    "Please click on the following link (or copy it into your browser) in order to validate your email address.\n" +
-                                    "\n" +
-                                    "    "+base_url+"/validate?email="+encodeURIComponent(email)+"&auth_code="+encodeURIComponent(auth_code)+"\n" +
-                                    "\n" +
-                    mailUtils.send("verify_registration", {
-                        "to": fullname+" <"+email+">",
+                    var vhostOptions = httpUtils.virtualHostOptions(req);
+                    var base_url = vhostOptions.base_url;
+
+                    var validation_request_url = base_url+"/validation-request?email="+encodeURIComponent(email);
+                    var validation_sent_url    = base_url+"/validation-sent?email="+encodeURIComponent(email);
+                    var validate_url           = base_url+"/validate?email="+encodeURIComponent(email)+"&auth_code="+encodeURIComponent(auth_code);
+                    var signup_url             = base_url+"/signup?email="+encodeURIComponent(email)+"&auth_code="+encodeURIComponent(fullname);
+
+                    var mail_text = 'Hi '+fullname+',\n' +
+                                    '\n' +
+                                    'You have registered as a user\n' +
+                                    'Please click on the following link (or copy it into your browser) in order to validate your email address.\n' +
+                                    '\n' +
+                                    '    '+validate_url+'\n' +
+                                    '\n';
+                    var mail_html = '<h1>Hi '+fullname+',</h1>\n' +
+                                    '<p>You have registered as a user\n' +
+                                    'Please click on the following link (or copy it into your browser) in order to validate your email address.</p>\n' +
+                                    '<blockquote><a href="'+validate_url+'">'+validate_url+'</a></blockquote>\n' +
+                                    "\n";
+                    console.log("mailUtils.send() to", '"'+fullname+'" <'+email+'>');
+                    console.log("mailUtils.send() text", mail_text);
+                    console.log("mailUtils.send() html", mail_html);
+                    mailUtils.send("validate_email", {
+                        "to": '"'+fullname+'" <'+email+'>',
                         "text": mail_text,
                         "html": mail_html
                     }, function (err, result) {
                         if (err) {
                             req.flash("error", "There was an error sending your verification email ("+err.message+")");
-                            res.redirect("/signup");
+                            res.redirect(signup_url);
                         }
                         else {
-                            req.flash("info", "You have successfully signed up and a validation email has been sent to your email inbox.<br>Please click the link in the email.<br>If you can't find the email, go <a href=\"/validate\">here</a> to request a new one.");
-                            res.redirect("/validation-sent");
+                            req.flash("info", "Email sent");
+                            res.redirect(validation_sent_url);
                         }
                     });
                 }
             }
         });
     },
+    // POST
+    validation_request: function (req, res, next) {
+        var email = req.body.email || "";
+
+        var validation_request_url = "/validation-request?email="+encodeURIComponent(email);
+        var validation_sent_url    = "/validation-sent?email="+encodeURIComponent(email);
+        var login_url = "/login?email="+encodeURIComponent(email);
+
+        if (!email) {
+            req.flash("error", "The email address must be supplied.<br>Please try again.");
+            res.redirect(validation_request_url);
+            return;
+        }
+
+        User.findOne({email: email}, function (err, user) {
+            if (err) {
+                req.flash("error", "You were unsuccessful in requesting a new validation email.<br>("+err.message+").<br>Perhaps try again.");
+                res.redirect(validation_request_url);
+            }
+            else if (!user) {
+                req.flash("error", "You were unsuccessful in requesting a new validation email.<br>A user with that email ("+email+") does not exist.");
+                res.redirect(validation_request_url);
+            }
+            else if (user.verified) {
+                req.flash("error", "That email is already validated. Please login.");
+                res.redirect(login_url);
+            }
+            else {
+                var auth_code = User.generateAuthCode(email);
+                var fullname = user.fullname;
+                user.auth_code = auth_code;
+                user.verified = false;
+                user.save(function (err) {
+                    if (err) {
+                        req.flash("error", "You were unsuccessful in requesting a new validation email.<br>("+err.message+").<br>Perhaps try again.");
+                        res.redirect(validation_request_url);
+                        return;
+                    }
+                    var vhostOptions = httpUtils.virtualHostOptions(req);
+                    var base_url = vhostOptions.base_url;
+
+                    var validate_url = base_url+"/validate?email="+encodeURIComponent(email)+"&auth_code="+encodeURIComponent(auth_code);
+
+                    var mail_text = 'Hi '+fullname+',\n' +
+                                    '\n' +
+                                    'You have requested this validation email to complete the process of registering as a user.\n' +
+                                    'Please click on the following link (or copy it into your browser) in order to validate your email address.\n' +
+                                    '\n' +
+                                    '    '+validate_url+'\n' +
+                                    '\n';
+                    var mail_html = '<h1>Hi '+fullname+',</h1>\n' +
+                                    '<p>You have requested this validation email to complete the process of registering as a user.<br>\n' +
+                                    'Please click on the following link (or copy it into your browser) in order to validate your email address.</p>\n' +
+                                    '<blockquote><a href="'+validate_url+'">'+validate_url+'</a></blockquote>\n' +
+                                    "\n";
+                    console.log("mailUtils.send() html", mail_html);
+                    mailUtils.send("validate_email", {
+                        "to": '"'+fullname+'" <'+email+'>',
+                        "text": mail_text,
+                        "html": mail_html
+                    }, function (err, result) {
+                        if (err) {
+                            req.flash("error", "There was an error sending your verification email ("+err.message+")");
+                            res.redirect(validation_request_url);
+                        }
+                        else {
+                            req.flash("info", "A new validation email has been sent.<br>This new email makes all old validation emails obsolete.<br>Please ensure you find this latest validation email and click on the link.");
+                            res.redirect(validation_sent_url);
+                        }
+                    });
+                });
+            }
+        });
+    },
+    // GET, POST
     validate: function (req, res, next) {
-        var email = req.body.email;
-        var provided_auth_code = req.body.auth_code;
-        if (email && auth_code) {
+        var query = req.body || {};    // for GET requests
+        if (req.query) {
+            _.defaults(query, req.query);
+        }
+        console.log("validate() req.body", req.body);
+        console.log("validate() req.query", req.query);
+        console.log("validate() query", query);
+        var email = query.email;
+        var auth_code = query.auth_code;
+        var validation_request_url = "/validation-request?email="+encodeURIComponent(email);
+        var login_url              = "/login?email="+encodeURIComponent(email);
+        var signup_url             = "/signup?email="+encodeURIComponent(email);
+        if (!email || !auth_code) {
+            req.flash("error", 'When trying to validate an email, either the email or the auth code was omitted.<br>Perhaps you need to request a new validation email.');
+            res.redirect(validation_request_url);
+        }
+        else {
             User.findOne({email: email}, function (err, user) {
-                if (err) { next(err); }
+                if (err) {
+                    req.flash("error", "An error occurred. ("+err.message+")");
+                    if (req.method === "GET") {
+                        res.redirect(validation_request_url);
+                    }
+                    else {
+                        res.redirect(validation_request_url);
+                    }
+                }
+                else if (!user) {
+                    req.flash("error", "No user with that email ("+email+") has already been validated.<br>Please go ahead and log in.");
+                    res.redirect(login_url);
+                }
+                else {
+                    console.log("validate() user=%j", user);
+                    if (user.verified) {
+                        req.flash("error", "The email ("+email+") has already been validated.<br>Please go ahead and log in.");
+                        res.redirect(login_url);
+                    }
+                    else if (user.isValidAuthCode(auth_code)) {
+                        user.verified = true;
+                        user.save(function (err) {
+                            if (err) {
+                                req.flash("error", "An error occurred updating your user record. ("+err.message+")");
+                                res.redirect(validation_request_url);
+                            }
+                            else {
+                                req.login(user, function() {
+                                    req.flash("info", 'Your email has been validated and you are logged in.');
+                                    res.redirect("/");
+                                });
+                            }
+                        });
+                    }
+                    else {
+                        req.flash("error", 'The auth code you used is not valid or has expired.<br>Please use the most recent one or request a new one.');
+                        res.redirect(validation_request_url);
+                    }
+                }
+            });
+        }
+    },
+    // POST
+    reset_request: function (req, res, next) {
+        var email = req.body.email || "";
+
+        var reset_request_url = "/reset-request?email="+encodeURIComponent(email);
+        var reset_sent_url    = "/reset-sent?email="+encodeURIComponent(email);
+        var login_url = "/login?email="+encodeURIComponent(email);
+
+        if (!email) {
+            req.flash("error", "The email address must be supplied.<br>Please try again.");
+            res.redirect(reset_request_url);
+            return;
+        }
+
+        User.findOne({email: email}, function (err, user) {
+            if (err) {
+                req.flash("error", "You were unsuccessful in requesting a password reset email.<br>("+err.message+").<br>Perhaps try again.");
+                res.redirect(reset_request_url);
+            }
+            else if (!user) {
+                req.flash("error", "You were unsuccessful in requesting a password reset email.<br>A user with that email ("+email+") does not exist.");
+                res.redirect(reset_request_url);
+            }
+            else if (user.verified) {
+                req.flash("error", "That email is already validated. Please login.");
+                res.redirect(login_url);
+            }
+            else {
+                var reset_code = User.generateAuthCode(email);
+                var fullname = user.fullname;
+                user.reset_code = reset_code;
+                user.save(function (err) {
+                    if (err) {
+                        req.flash("error", "You were unsuccessful in requesting a password reset email.<br>("+err.message+").<br>Perhaps try again.");
+                        res.redirect(reset_request_url);
+                        return;
+                    }
+                    var vhostOptions = httpUtils.virtualHostOptions(req);
+                    var base_url = vhostOptions.base_url;
+
+                    var reset_url = base_url+"/reset?email="+encodeURIComponent(email)+"&reset_code="+encodeURIComponent(reset_code);
+
+                    var mail_text = 'Hi '+fullname+',\n' +
+                                    '\n' +
+                                    'You have requested to reset your password.\n' +
+                                    'Please click on the following link (or copy it into your browser) to proceed.\n' +
+                                    '\n' +
+                                    '    '+reset_url+'\n' +
+                                    '\n';
+                    var mail_html = '<h1>Hi '+fullname+',</h1>\n' +
+                                    '<p>You have requested to reset your password.<br>\n' +
+                                    'Please click on the following link (or copy it into your browser) to proceed.</p>\n' +
+                                    '<blockquote><a href="'+reset_url+'">'+reset_url+'</a></blockquote>\n' +
+                                    "\n";
+                    console.log("mailUtils.send() html", mail_html);
+                    mailUtils.send("reset_password", {
+                        "to": '"'+fullname+'" <'+email+'>',
+                        "text": mail_text,
+                        "html": mail_html
+                    }, function (err, result) {
+                        if (err) {
+                            req.flash("error", "There was an error sending your password reset email ("+err.message+")");
+                            res.redirect(validation_request_url);
+                        }
+                        else {
+                            req.flash("info", "The new validation email makes all old validation emails obsolete.<br>Please ensure you find this latest validation email and click on the link.");
+                            res.redirect(validation_sent_url);
+                        }
+                    });
+                });
+            }
+        });
+    },
+    reset: function (req, res, next) {
+        var query = req.body || {};    // for GET requests
+        if (req.query) {
+            _.defaults(query, req.query);
+        }
+        var email = query.email;
+        var reset_code = query.reset_code;
+        var validation_request_url = base_url+"/validation-request?email="+encodeURIComponent(email);
+        var login_url    = base_url+"/login?email="+encodeURIComponent(email);
+        if (email && reset_code) {
+            User.findOne({email: email}, function (err, user) {
+                if (err) {
+                    req.flash("error", "An error occurred. ("+err.message+")");
+                    if (req.method === "GET") {
+                        res.redirect(validation_request_url);
+                    }
+                    else {
+                        res.redirect(validation_request_url);
+                    }
+                }
                 else {
                     if (user.verified) {
                         req.flash("error", "The email ("+email+") has already been validated.<br>Please go ahead and log in.");
-                        res.redirect("/login?email="+encodeURIComponent(email));
-                        
+                        res.redirect(login_url);
                     }
-                    if (user.isValidAuthCode(provided_auth_code)) {
+                    else if (user.isValidAuthCode(reset_code)) {
+                        req.flash("info", 'Your email has been validated and you are logged in.');
+                        res.redirect("/");
+                    }
+                    else {
+                        req.flash("error", 'The auth code you used is not valid or has expired.<br>Please use the most recent one or request a new one.');
+                        res.redirect(validation_request_url);
                     }
                 }
             });
         }
         else {
+            req.flash("error", 'The auth code you used is not valid or has expired.<br>Please use the most recent one or request a new one.');
+            res.redirect(validation_request_url);
         }
-
-        var auth_code = authUtils.generateAuthCode(email);
-        var passwordHash = authUtils.generateHash(password);
-        var provided_auth_code = req.param('auth_code');
-        var email_verified = authUtils.isValidAuthCode(email, provided_auth_code);
-        var user = new User({
-            email: email,
-            fullname: fullname,
-            password: passwordHash,
-            auth_code: auth_code,
-            verified: email_verified
-        });
-        console.log("signup new user=%j", user);
-        console.log("signup req._passport", req._passport);
-        console.log("signup req.session", req.session);
-        user.save(function (err) {
-            if (err) {
-                console.log(err);
-                // if (err.code === 11000) { }
-                if (err.message.match(/duplicate key/)) {
-                    req.flash("error", "The user with that email ("+email+") is already signed up.<br>Please log in.");
-                    res.redirect("/login");
-                }
-                else {
-                    req.flash("error", "You were unsuccessful in signing up.<br>("+err.message+").<br>Please try again.");
-                    res.redirect("/signup");
-                }
-            }
-            else {
-                if (email_verified) {
-                    req.login(user, function() {
-                        req.flash("info", "You have successfully signed up, and you have been automatically logged in.");
-                        res.redirect("/");
-                    });
-                }
-                else {
-                    var base_url = 
-                    var mail_text = "Hi "+fullname+",\n" +
-                                    "\n" +
-                                    "You have registered as a user.\n" +
-                                    "Please click on the following link (or copy it into your browser) in order to validate your email address.\n" +
-                                    "\n" +
-                                    "    "+base_url+"/validate?email="+encodeURIComponent(email)+"&auth_code="+encodeURIComponent(auth_code)+"\n" +
-                                    "\n";
-                    var mail_html = "<h1>Hi "+fullname+",</h1>\n" +
-                                    "<p>You have registered as a user.<br>\n" +
-                                    "Please click on the following link (or copy it into your browser) in order to validate your email address.</p>\n" +
-                                    "\n" +
-                                    "<blockquote><a href='"+base_url+"/validate?email="+encodeURIComponent(email)+"&auth_code="+encodeURIComponent(auth_code)'>"+base_url+"/validate?email="+encodeURIComponent(email)+"&auth_code="+encodeURIComponent(auth_code)+"</a></blockquote>\n" +
-                                    "\n";
-                    mailUtils.send("verify_registration", {
-                        "to": fullname+" <"+email+">",
-                        "text": mail_text,
-                        "html": mail_html
-                    }, function (err, result) {
-                        if (err) {
-                            req.flash("error", "There was an error sending your verification email ("+err.message+")");
-                            res.redirect("/signup");
-                        }
-                        else {
-                            req.flash("info", "You have successfully signed up and a validation email has been sent to your email inbox.<br>Please click the link in the email.<br>If you can't find the email, go <a href=\"/validate\">here</a> to request a new one.");
-                            res.redirect("/validation-sent");
-                        }
-                    });
-                }
-            }
-        });
-    },
-    // used for the password hash stored in the database
-    generateHash: function (password) {
-        return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
-    },
-    generateAuthCode: function (email) {
-        var auth_code = authUtils.generateHash(email + 'authcode' + Math.random());
-        auth_code = auth_code.replace(/[^A-Za-z0-9]/g, "").substr(-10);  // get rid of non-alphanumerics and take the last 10 chars
-        return(auth_code);
-    },
-    isValidPassword: function(password, encrypted_password) {
-        return((password && encrypted_password && bcrypt.compareSync(password, encrypted_password)) ? true : false);
-    },
-    isValidAuthCode: function(provided_auth_code, auth_code) {
-        return((provided_auth_code && (provided_auth_code === "cmd-928hcj4lwsnvs6" || provided_auth_code === "bp-628hcj4lwsNvs6")) ? true : false);
     },
     passwordStrength: function(password) {
         var strength = password.length;
@@ -420,7 +577,8 @@ var authUtils = {
     },
     isPasswordStrongEnough: function(password) {
         var strength = authUtils.passwordStrength(password);
-        return(strength >= 12.0);
+        var minPasswordStrength = (config.general) ? (config.general.minPasswordStrength || 12) : 12;
+        return(strength >= minPasswordStrength);
     }
 };
 

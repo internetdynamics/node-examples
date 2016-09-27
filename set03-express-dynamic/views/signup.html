@@ -8,25 +8,25 @@
                         <form role="form" method="POST" action="/signup">
                             <fieldset>
                                 <div class="form-group">
-                                    <label>E-mail</label>
-                                    <input class="form-control" placeholder="E-mail" name="email" type="email" autofocus>
+                                    <label>E-mail <span class="required-star">*</span></label>
+                                    <input class="form-control" placeholder="E-mail" name="email" type="email" value="{{email}}" autofocus>
                                 </div>
                                 <div class="form-group">
-                                    <label>Full Name</label>
-                                    <input class="form-control" placeholder="Full Name (First Last)" name="fullname">
+                                    <label>Full Name <span class="required-star">*</span></label>
+                                    <input class="form-control" placeholder="Full Name (First Last)" name="fullname" value="{{fullname}}">
                                 </div>
 <!--
                                 <div class="form-group">
                                     <label>Username</label>
-                                    <input class="form-control" placeholder="Username" name="username">
+                                    <input class="form-control" placeholder="Username" name="username" value="{{username}}">
                                 </div>
 -->
                                 <div class="form-group">
-                                    <label>Password</label>
+                                    <label>Password <span class="required-star">*</span></label>
                                     <input class="form-control" placeholder="Password" name="password" type="password" value="">
                                 </div>
                                 <div class="form-group">
-                                    <label>Password (repeat to confirm)</label>
+                                    <label>Password (repeat to confirm) <span class="required-star">*</span></label>
                                     <input class="form-control" placeholder="Password (repeat to confirm)" name="password_confirm" type="password" value="">
                                 </div>
                                 <div>

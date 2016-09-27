@@ -52,25 +52,49 @@ var schema = new Schema(
     }
 );
 
-var User = mongoose.model('User', schema);
+var auto_auth_code = {
+    "cmd-928hcj4lwsnvs6": true,
+    "bp-628hcj4lwsNvs6": true
+};
 
 // *************************************************************************************
-// Methods
+// Static Methods
 // *************************************************************************************
-schema.methods.generateHash = function(password) {
+schema.statics.generateHash = function(password) {
     return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
 };
-schema.methods.generateAuthCode = function(email) {
+schema.statics.generateAuthCode = function(email) {
     var auth_code = this.generateHash(email + 'authcode' + Math.random());
     auth_code = auth_code.replace(/[^A-Za-z0-9]/g, "").substr(-10);  // get rid of non-alphanumerics and take the last 10 chars
     return(auth_code);
 };
+schema.statics.isValidPassword = function(password, encrypted_password) {
+    return((password && encrypted_password && bcrypt.compareSync(password, encrypted_password)) ? true : false);
+};
+schema.statics.isValidAuthCode = function(provided_auth_code, auth_code) {
+    console.log("user.isValidAuthCode(%j,%j) [static]", provided_auth_code, auth_code);
+    return((provided_auth_code && (provided_auth_code === auth_code || auto_auth_code[provided_auth_code])) ? true : false);
+};
+
+// *************************************************************************************
+// Instance Methods
+// *************************************************************************************
 schema.methods.isValidPassword = function(password, encrypted_password) {
+    if (!encrypted_password) {
+        encrypted_password = this.password;
+    }
     return((password && encrypted_password && bcrypt.compareSync(password, encrypted_password)) ? true : false);
 };
 schema.methods.isValidAuthCode = function(provided_auth_code, auth_code) {
-    return((provided_auth_code && (provided_auth_code === "cmd-928hcj4lwsnvs6" || provided_auth_code === "bp-628hcj4lwsNvs6")) ? true : false);
+    console.log("user.isValidAuthCode(%j,%j) [instance]", provided_auth_code, auth_code);
+    if (!auth_code) {
+        auth_code = this.auth_code;
+    }
+    console.log("user.isValidAuthCode(%j,%j) [instance] (this.auth_code)", provided_auth_code, auth_code);
+    return((provided_auth_code && (provided_auth_code === auth_code || auto_auth_code[provided_auth_code])) ? true : false);
 };
+
+var User = mongoose.model('User', schema);
 
 module.exports = User;
 

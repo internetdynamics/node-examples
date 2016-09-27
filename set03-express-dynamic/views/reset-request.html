@@ -5,11 +5,11 @@
                         <h3 class="panel-title">Reset Your Password</h3>
                     </div>
                     <div class="panel-body">
-                        <form role="form" method="POST" action="/reset">
+                        <form role="form" method="POST" action="/reset-request">
                             <fieldset>
                                 <div class="form-group">
                                     <label>E-mail</label>
-                                    <input class="form-control" placeholder="E-mail to reset password for" name="email" type="email" autofocus>
+                                    <input class="form-control" placeholder="E-mail to reset password for" name="email" type="email" value="{{email}}" autofocus>
                                 </div>
                                 <div>
                                     <button type="submit" class="btn btn-lg btn-warning btn-block">Reset Password</button>

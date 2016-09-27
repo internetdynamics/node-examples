@@ -2,22 +2,23 @@
             <div class="col-md-4 col-md-offset-4">
                 <div class="login-panel panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Add/Validate an Email Address</h3>
+                        <h3 class="panel-title">Validation Email Sent</h3>
                     </div>
                     <div class="panel-body">
-                        You have successfully signed up and a validation email has been sent to your email inbox.<br>
-                        Please find the email and click the link in it.<br>
-                        If you can't find the email, go <a href=\"/validate\">here</a> to request a new one.
+                        <p>You have successfully signed up and a validation email has been sent to your email inbox.</p>
+                        <p><blockquote>{{email}}</blockquote></p>
+                        <p>Please find the email and click the link in it.</p>
+                        <p>If you can't find the email, go <a href="/validation-request?email={{#lambdas.urlencode}}{{email}}{{/lambdas.urlencode}}">here</a> to request a new one.</p>
 
                                 {{#flash}}
                                 <div id="form-error" class="flash-error">
-                                    ({{flash}})
+                                    {{{flash}}}
                                 </div>
                                 {{/flash}}
 
                                 {{#flash_info}}
                                 <div id="form-error" class="flash-info">
-                                    {{flash_info}}
+                                    {{{flash_info}}}
                                 </div>
                                 {{/flash_info}}
 

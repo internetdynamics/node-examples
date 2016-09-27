@@ -5,11 +5,11 @@
                         <h3 class="panel-title">Add/Validate an Email Address</h3>
                     </div>
                     <div class="panel-body">
-                        <form role="form" method="POST" action="/profile-new-email">
+                        <form role="form" method="POST" action="/validation-request">
                             <fieldset>
                                 <div class="form-group">
                                     <label>E-mail</label>
-                                    <input class="form-control" placeholder="E-mail" name="email" type="email" autofocus>
+                                    <input class="form-control" placeholder="E-mail" name="email" type="email" value="{{email}}" autofocus>
                                 </div>
                                 <div>
                                     <button type="submit" class="btn btn-lg btn-success btn-block">Validate Email</button>
@@ -17,16 +17,13 @@
 
                                 {{#flash}}
                                 <div id="form-error" class="flash-error">
-                                    Sorry. Either your email address or<br>
-                                    your password was incorrect.<br>
-                                    ({{flash}})<br>
-                                    Please try again.
+                                    {{{flash}}}
                                 </div>
                                 {{/flash}}
 
                                 {{#flash_info}}
                                 <div id="form-error" class="flash-info">
-                                    {{flash_info}}
+                                    {{{flash_info}}}
                                 </div>
                                 {{/flash_info}}
 

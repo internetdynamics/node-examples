@@ -1,6 +1,8 @@
 
 var config = {
-    // these views are set onto a route in "routes/pages.js" and use()d as pagesRoute on the Express app in the main app.js/server.js file
+    general: {
+        minPasswordStrength: 12
+    },
     cookie_session: {
         config: {
             "name": "node-demo-cs",

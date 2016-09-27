@@ -10,6 +10,9 @@ catch (err) {
 }
 
 var configGlobal = {
+    general: {
+        minPasswordStrength: 12
+    },
     app: {
         // These are variables which are "local" to the Express app, but because the app is everything, they are really app global variables.
         // They are copied from this config file to app.locals in the app.js/server.js file.
@@ -18,7 +21,6 @@ var configGlobal = {
             site_name: "Demo Corporation"
         },
         settings: {
-
             // these are set onto the Express app in the main "app.js" or "server.js" file
             "case sensitive routing": true,
             "etag":                   "weak",
@@ -279,10 +281,10 @@ var configGlobal = {
                 title: "Sign Up"
             }
         },
-        "reset": {
+        "reset-request": {
             method: "get",
-            route: [ "/reset" ],
-            content_template: "reset.html",
+            route: [ "/reset-request" ],
+            content_template: "reset-request.html",
             render_options: {
                 layout: "layouts/auth.html",
                 title: "Reset Password"
@@ -297,10 +299,10 @@ var configGlobal = {
                 title: "User Profile"
             }
         },
-        "validate": {
+        "validation-request": {
             method: "get",
-            route: [ "/validate" ],
-            content_template: "validate.html",
+            route: [ "/validation-request" ],
+            content_template: "validation-request.html",
             render_options: {
                 layout: "layouts/auth.html",
                 title: "Validate Email"
@@ -312,7 +314,7 @@ var configGlobal = {
             content_template: "validation-sent.html",
             render_options: {
                 layout: "layouts/auth.html",
-                title: "Validate Email Sent"
+                title: "Validation Email Sent"
             }
         }
     },
@@ -327,21 +329,21 @@ var configGlobal = {
             "contact": {
                 "from": "Contact <no-reply@democorporation.com>",
                 "to": "Support <support@democorporation.com>",
-                "subject": "Contact Message",
-                "text_template": "/mail/send_contact_info.txt",
-                "html_template": "/mail/send_contact_info.html"
+                "subject": "Contact Message"
+                // "text_template": "/mail/send_contact_info.txt",
+                // "html_template": "/mail/send_contact_info.html"
             },
-            "verify_registration": {
+            "validate_email": {
                 "from": "Account Registration <no-reply@democorporation.com>",
-                "subject": "Complete Your Account Registration",
-                "text_template": "/mail/send_auth_code.txt",
-                "html_template": "/mail/send_auth_code.html"
+                "subject": "Complete Your Account Registration"
+                // "text_template": "/mail/send_auth_code.txt",
+                // "html_template": "/mail/send_auth_code.html"
             },
             "reset_password": {
                 "from": "Accounts <no-reply@democorporation.com>",
-                "subject": "Reset Your Password",
-                "text_template": "/mail/send_password_reset_code.txt",
-                "html_template": "/mail/send_password_reset_code.html"
+                "subject": "Reset Your Password"
+                // "text_template": "/mail/send_password_reset_code.txt",
+                // "html_template": "/mail/send_password_reset_code.html"
             }
         }
     }
